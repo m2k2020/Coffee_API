@@ -96,8 +96,6 @@ def check_permissions(permission, payload):
 
     return True
 
-    raise Exception("Not Implemented")
-
 
 """
 @TODO implement verify_decode_jwt(token) method
