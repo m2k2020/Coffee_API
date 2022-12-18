@@ -31,7 +31,7 @@ CORS(app)
 """
 
 
-@app.route("/drinks")
+@app.get("/drinks")
 def get_drinks():
     drinks = Drink.query.all()
 
@@ -48,6 +48,14 @@ def get_drinks():
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 """
+
+
+@app.get("/drinks-details")
+@requires_auth("get:drinks-detail")
+def drink_detail(jwt):
+    drink_list = Drink.query.all()
+    get_all = [drink.long() for drink in drink_list]
+    return jsonify({"success": True, "drinks": get_all})
 
 
 """
