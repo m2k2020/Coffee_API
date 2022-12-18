@@ -74,11 +74,11 @@ def drink_detail(jwt):
 def insert_drink(jwt):
     # try:
     body = request.get_json()
-    title = body.get("title")
+    ntitle = body.get("title")
     recipe = body.get("recipe")
     recipe_json = json.dumps(recipe)
 
-    drink = Drink(title=title, recipe=recipe_json)
+    drink = Drink(title=ntitle, recipe=recipe_json)
 
     drink.insert()
 
@@ -100,6 +100,19 @@ def insert_drink(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 """
+
+
+@app.patch("/drinks/<int:drink_id>")
+@requires_auth("patch:drinks")
+def update_drinks(jwt, drink_id):
+    body = request.get_json()
+    title = body.get("title", None)
+    recipe = body.get("recipe", None)
+    res_json = json.dumps(recipe)
+    drink = Drink.query.get(drink_id)
+    drink.title = title
+    drink.recipe = res_json
+    return jsonify({"success": True, "drinks": [drink.long()]})
 
 
 """
