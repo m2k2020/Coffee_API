@@ -50,15 +50,6 @@ def get_drinks():
 """
 
 
-@app.route("/drinks")
-def get_drinks():
-    drinks = Drink.query.all()
-
-    formatted_drinks = [drink.short() for drink in drinks]
-
-    return jsonify({"success": True, "drinks": formatted_drinks})
-
-
 """
 @TODO implement endpoint
     POST /drinks
