@@ -35,9 +35,9 @@ CORS(app)
 def get_drinks():
     drinks = Drink.query.all()
 
-    formatted_drinks = [drink.short() for drink in drinks]
+    get_all_drinks = [drink.short() for drink in drinks]
 
-    return jsonify({"success": True, "drinks": formatted_drinks})
+    return jsonify({"success": True, "drinks": get_all_drinks})
 
 
 """
@@ -50,12 +50,13 @@ def get_drinks():
 """
 
 
-@app.get("/drinks-details")
+@app.get("/drinks-detail")
 @requires_auth("get:drinks-detail")
 def drink_detail(jwt):
-    drink_list = Drink.query.all()
-    get_all = [drink.long() for drink in drink_list]
-    return jsonify({"success": True, "drinks": get_all})
+    # drink_list = Drink.query.all()
+    all_drinks = [drink.long() for drink in Drink.query.all()]
+    # get_all = [drink.long() for drink in drink_list]
+    return jsonify({"success": True, "drinks": all_drinks})
 
 
 """
