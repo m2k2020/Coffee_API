@@ -72,17 +72,20 @@ def drink_detail(jwt):
 @app.post("/drinks")
 @requires_auth("post:drinks")
 def insert_drink(jwt):
-    try:
-        body = request.get_json()
-        new_title = body["title"]
-        new_recipe = body["recipe"]
+    # try:
+    body = request.get_json()
+    new_title = body["title"]
+    new_recipe = body["recipe"]
 
-        drink = Drink(title=new_title, recipe=new_recipe)
-        drink.insert()
+    drink = Drink(title=new_title, recipe=new_recipe)
 
-        return jsonify({"success": True, "drinks": [drink.long()]})
-    except:
-        abort(422)
+    drink.insert()
+
+    return jsonify({"success": True, "drinks": [drink.long()]})
+
+
+# except:
+#     abort(422)
 
 
 """
