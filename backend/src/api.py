@@ -74,10 +74,11 @@ def drink_detail(jwt):
 def insert_drink(jwt):
     # try:
     body = request.get_json()
-    new_title = body["title"]
-    new_recipe = body["recipe"]
+    title = body.get("title")
+    recipe = body.get("recipe")
+    recipe_json = json.dumps(recipe)
 
-    drink = Drink(title=new_title, recipe=new_recipe)
+    drink = Drink(title=title, recipe=recipe_json)
 
     drink.insert()
 
