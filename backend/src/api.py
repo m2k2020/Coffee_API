@@ -53,10 +53,9 @@ def get_drinks():
 @app.get("/drinks-detail")
 @requires_auth("get:drinks-detail")
 def drink_detail(jwt):
-    # drink_list = Drink.query.all()
-    all_drinks = [drink.long() for drink in Drink.query.all()]
-    # get_all = [drink.long() for drink in drink_list]
-    return jsonify({"success": True, "drinks": all_drinks})
+    drink_list = Drink.query.all()
+    get_all = [drink.long() for drink in drink_list]
+    return jsonify({"success": True, "drinks": get_all})
 
 
 """
@@ -68,6 +67,22 @@ def drink_detail(jwt):
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 """
+
+
+@app.post("/drinks")
+@requires_auth("post:drinks")
+def insert_drink(jwt):
+    try:
+        body = request.get_json()
+        new_title = body["title"]
+        new_recipe = body["recipe"]
+
+        drink = Drink(title=new_title, recipe=new_recipe)
+        drink.insert()
+
+        return jsonify({"success": True, "drinks": [drink.long()]})
+    except:
+        abort(422)
 
 
 """
