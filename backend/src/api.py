@@ -72,21 +72,22 @@ def drink_detail(jwt):
 @app.post("/drinks")
 @requires_auth("post:drinks")
 def insert_drink(jwt):
-    # try:
-    body = request.get_json()
-    ntitle = body.get("title")
-    recipe = body.get("recipe")
-    recipe_json = json.dumps(recipe)
+    try:
+        body = request.get_json()
+        ntitle = body.get("title")
+        recipe = body.get("recipe")
+        recipe_json = json.dumps(recipe)
 
-    drink = Drink(title=ntitle, recipe=recipe_json)
+        if len(ntitle) == 0:
+            abort(422)
 
-    drink.insert()
+        drink = Drink(title=ntitle, recipe=recipe_json)
+        drink.insert()
 
-    return jsonify({"success": True, "drinks": [drink.long()]})
+        return jsonify({"success": True, "drinks": [drink.long()]})
 
-
-# except:
-#     abort(422)
+    except:
+        abort(422)
 
 
 """
@@ -102,16 +103,19 @@ def insert_drink(jwt):
 """
 
 
-@app.patch("/drinks/<int:drink_id>")
+@app.patch("/drinks/<id>")
 @requires_auth("patch:drinks")
-def update_drinks(drink_id, jwt):
+def update_drinks(jwt, id):
     body = request.get_json()
+
     title = body.get("title", None)
     recipe = body.get("recipe", None)
     res_json = json.dumps(recipe)
-    drink = Drink.query.get(drink_id)
+
+    drink = Drink.query.filter_by(id=id).first()
     drink.title = title
     drink.recipe = res_json
+    drink.update()
     return jsonify({"success": True, "drinks": [drink.long()]})
 
 
@@ -127,13 +131,13 @@ def update_drinks(drink_id, jwt):
 """
 
 
-@app.delete("/drinks/<int:drink_id>")
+@app.delete("/drinks/<id>")
 @requires_auth("delete:drinks")
-def delete_drinks(drink_id, jwt):
-    drink = Drink.query.filter(Drink.id == drink_id)
+def delete_drinks(jwt, id):
+    drink = Drink.query.filter_by(id=id).first()
     drink.delete()
 
-    return jsonify({"success": True, "delete": drink.id})
+    return jsonify({"success": True, "delete": id})
 
 
 # Error Handling
