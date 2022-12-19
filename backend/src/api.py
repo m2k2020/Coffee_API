@@ -104,7 +104,7 @@ def insert_drink(jwt):
 
 @app.patch("/drinks/<int:drink_id>")
 @requires_auth("patch:drinks")
-def update_drinks(jwt, drink_id):
+def update_drinks(drink_id, jwt):
     body = request.get_json()
     title = body.get("title", None)
     recipe = body.get("recipe", None)
@@ -125,6 +125,15 @@ def update_drinks(jwt, drink_id):
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 """
+
+
+@app.delete("/drinks/<int:drink_id>")
+@requires_auth("delete:drinks")
+def delete_drinks(drink_id, jwt):
+    drink = Drink.query.filter(Drink.id == drink_id)
+    drink.delete()
+
+    return jsonify({"success": True, "delete": drink.id})
 
 
 # Error Handling
