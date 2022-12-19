@@ -164,7 +164,20 @@ def unprocessable(error):
 """
 
 
+@app.errorhandler(404)
+def not_found(error):
+    return (
+        jsonify({"success": False, "error": 404, "message": "resource Not Found"}),
+        404,
+    )
+
+
 """
 @TODO implement error handler for AuthError
     error handler should conform to general task above
 """
+
+
+@app.errorhandler(AuthError)
+def auth_error(error):
+    return jsonify({"success": False, "error": 401, "message": "Unauthorized"}), 401
