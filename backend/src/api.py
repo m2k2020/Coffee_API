@@ -185,8 +185,3 @@ def not_found(error):
 @app.errorhandler(AuthError)
 def auth_error(error):
     return jsonify({"success": False, "error": 401, "message": "Unauthorized"}), 401
-
-
-@app.errorhandler(AuthError)
-def auth_error(error):
-    return jsonify({"success": False, "error": 401, "message": "Unauthorized"}), 401
