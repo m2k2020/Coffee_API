@@ -39,16 +39,21 @@ def get_token_auth_header():
     # if "Authorization" not in request.headers:
     #     abort(401)
 
-    aut_header = request.headers.get("Authorization").split(" ")
+    auth = request.headers.get("Authorization", None)
+    if not auth:
+        raise AuthError({"code": "authorization_header_missing",
+                         "description":
+                         "Authorization header is expected"}, 401)
 
-    # check if the header is bearer token
-    if len(aut_header) != 2:
-        abort(401)
-    elif aut_header[0].lower() != "bearer":
-        abort(401)
 
-    # return token at the end
-    return aut_header[1]
+    if "Authorization" not in request.headers:
+        abort(401, 'No auth header found')
+
+    header = request.headers["Authorization"].split(' ')
+    if len(header) != 2:
+        abort(401, 'Invalid auth header')
+    elif header[0].lower() != 'bearer':
+        abort(401, 'Invalid auth header prefix')
 
     # raise Exception("Not Implemented")
 
