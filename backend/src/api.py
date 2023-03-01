@@ -4,7 +4,7 @@ from sqlalchemy import exc
 import json
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
+from .database.models import db_drop_and_create_all, setup_db, Drink, db
 from .auth.auth import AuthError, requires_auth
 
 app = Flask(__name__)
@@ -17,8 +17,8 @@ CORS(app)
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 !! Running this funciton will add one
 """
-# with app.app_context():
-#     db_drop_and_create_all()
+app.app_context().push()
+db_drop_and_create_all()
 
 # ROUTES
 """
@@ -33,11 +33,11 @@ CORS(app)
 
 @app.get("/drinks")
 def get_drinks():
-    drinks = Drink.query.all()
-
-    get_all_drinks = [drink.short() for drink in drinks]
-
-    return jsonify({"success": True, "drinks": get_all_drinks})
+    drinks = db.session.query(Drink).all()
+    if drinks is None:
+        abort(404)
+    all_drinks = [drink.short() for drink in drinks]
+    return {"success": True, "drinks": all_drinks}
 
 
 """
@@ -52,10 +52,12 @@ def get_drinks():
 
 @app.get("/drinks-detail")
 @requires_auth("get:drinks-detail")
-def drink_detail(jwt):
-    drink_list = Drink.query.all()
-    get_all = [drink.long() for drink in drink_list]
-    return jsonify({"success": True, "drinks": get_all})
+def get_drinks_details(jwt):
+    drinks = db.session.query(Drink).all()
+    if drinks is None:
+        abort(404)
+    all_drinks = [drink.long() for drink in drinks]
+    return {"success": True, "drinks": all_drinks}
 
 
 """
@@ -71,21 +73,25 @@ def drink_detail(jwt):
 
 @app.post("/drinks")
 @requires_auth("post:drinks")
-def insert_drink(jwt):
+def add_new_drink(jwt):
+    data = request.get_json()
+
+    title = data.get("title", None)
+    recipe = data.get("recipe", None)
+    recipe_to_josn = json.dumps(recipe)
+
+    # if ther is no data passed donw to the api
+    if len(title) == 0:
+        abort(422)
+
     try:
-        body = request.get_json()
-        ntitle = body.get("title")
-        recipe = body.get("recipe")
-        recipe_json = json.dumps(recipe)
+        new_drink = Drink(title=title, recipe=recipe_to_josn)
+        new_drink.insert()
 
-        if len(ntitle) == 0:
-            abort(422)
-
-        drink = Drink(title=ntitle, recipe=recipe_json)
-        drink.insert()
-
-        return jsonify({"success": True, "drinks": [drink.long()]})
-
+        # read all the drinks and send back to the front end
+        drinks = db.session.query(Drink).all()
+        all_drinks = [drink.long() for drink in drinks]
+        return {"success": True, "drinks": all_drinks}
     except:
         abort(422)
 
@@ -105,18 +111,29 @@ def insert_drink(jwt):
 
 @app.patch("/drinks/<id>")
 @requires_auth("patch:drinks")
-def update_drinks(jwt, id):
-    body = request.get_json()
+def update_drink(jwt, id):
+    # find the drink to update
+    drink_to_update = db.session.query(Drink).filter(Drink.id == id).one_or_none()
+    if drink_to_update is None:
+        abort(404)
 
-    title = body.get("title", None)
-    recipe = body.get("recipe", None)
-    res_json = json.dumps(recipe)
+    try:
+        data = request.get_json()
+        title = data.get("title")
+        recipe = data.get("recipe")
+        recipe_to_json = json.dumps(recipe)
 
-    drink = Drink.query.filter_by(id=id).first()
-    drink.title = title
-    drink.recipe = res_json
-    drink.update()
-    return jsonify({"success": True, "drinks": [drink.long()]})
+        drink_to_update.title = title
+        drink_to_update.recipe = recipe_to_json
+        drink_to_update.update()
+
+        # get all drinks and send back to the front end
+        drinks = db.session.query(Drink).all()
+        all_drinks = [drink.long() for drink in drinks]
+
+        return {"success": True, "drinks": all_drinks}
+    except:
+        abort(404)
 
 
 """
@@ -133,11 +150,19 @@ def update_drinks(jwt, id):
 
 @app.delete("/drinks/<id>")
 @requires_auth("delete:drinks")
-def delete_drinks(jwt, id):
-    drink = Drink.query.filter_by(id=id).first()
-    drink.delete()
+def delete_drink(jwt, id):
+    drink_to_delete = db.session.query(Drink).filter(Drink.id == id).one_or_none()
 
-    return jsonify({"success": True, "delete": id})
+    try:
+        if drink_to_delete is None:
+            abort(404)
+
+        deleted_record_id = drink_to_delete.id
+        drink_to_delete.delete()
+
+        return {"success": True, "delete": deleted_record_id}
+    except:
+        abort(404)
 
 
 # Error Handling
@@ -171,7 +196,7 @@ def unprocessable(error):
 @app.errorhandler(404)
 def not_found(error):
     return (
-        jsonify({"success": False, "error": 404, "message": "resource Not Found"}),
+        jsonify({"success": False, "error": 404, "message": "resource not found"}),
         404,
     )
 
@@ -183,5 +208,5 @@ def not_found(error):
 
 
 @app.errorhandler(AuthError)
-def auth_error(error):
-    return jsonify({"success": False, "error": 401, "message": "Unauthorized"}), 401
+def autherror(error):
+    return jsonify({"success": False, "error": 401, "message": "An Authorized"})
